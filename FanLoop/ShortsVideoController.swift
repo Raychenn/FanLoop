@@ -16,6 +16,8 @@ class ShortsVideoController: UIViewController {
         tableView.backgroundColor = .systemBackground
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.register(VideoCell.self, forCellReuseIdentifier: String(describing: VideoCell.self))
+        tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
     
@@ -32,12 +34,22 @@ class ShortsVideoController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupBindings()
+    }
+    
+    override func viewIsAppearing(_ animated: Bool) {
+        super.viewIsAppearing(animated)
         viewModel.fetchVideos()
-
     }
 
     private func setupUI() {
         title = "FanLoop"
+        view.addSubview(tableView)
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
     }
     
     private func setupBindings() {
@@ -66,11 +78,18 @@ class ShortsVideoController: UIViewController {
 extension ShortsVideoController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        20
+        viewModel.videos.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        UITableViewCell()
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: VideoCell.identifier, for: indexPath) as? VideoCell else {
+            return UITableViewCell()
+        }
+        
+        let video = viewModel.videos[indexPath.row]
+        cell.configure(with: video)
+        
+        return cell
     }
     
 }

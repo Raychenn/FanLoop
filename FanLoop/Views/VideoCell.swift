@@ -85,19 +85,19 @@ class VideoCell: UITableViewCell {
     // MARK: - Layout
 
     private func setupViews() {
-        contentView.addSubview(titleLabel)
+//        contentView.addSubview(titleLabel)
         contentView.addSubview(videoContainerView)
         
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+//            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+//            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+//            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
             
-            videoContainerView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            videoContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            videoContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            videoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            videoContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            videoContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             videoContainerView.heightAnchor.constraint(equalToConstant: 200),
-            videoContainerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
+            videoContainerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
     }
 
