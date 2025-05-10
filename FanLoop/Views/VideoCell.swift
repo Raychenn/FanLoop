@@ -14,6 +14,7 @@ class VideoCell: UITableViewCell {
     
     private var player: AVPlayer?
     private var playerLayer: AVPlayerLayer?
+    private var playerItemEndObserver: NSObjectProtocol?
     private let videoHeightRatio: CGFloat = 0.75
     private var isMuted: Bool = false {
         didSet {
@@ -64,6 +65,11 @@ class VideoCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupViews()
     }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        playerLayer?.frame = videoContainerView.bounds
+    }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -81,10 +87,10 @@ class VideoCell: UITableViewCell {
             playerLayer = AVPlayerLayer(player: player)
             playerLayer?.frame = contentView.bounds
             playerLayer?.videoGravity = .resizeAspectFill
-
             if let layer = playerLayer {
                 videoContainerView.layer.insertSublayer(layer, at: 0)
             }
+            setupPlayerLooping()
         } else {
             print("⚠️ Video not found: \(video.url).mp4")
         }
@@ -92,12 +98,26 @@ class VideoCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        // Remove the observer when the cell is reused
+        if let observer = playerItemEndObserver {
+            NotificationCenter.default.removeObserver(observer)
+            playerItemEndObserver = nil
+        }
         player?.pause()
         player = nil
         playerLayer?.removeFromSuperlayer()
         playerLayer = nil
     }
+    
+    deinit {
+        // Clean up observer when cell is deallocated
+        if let observer = playerItemEndObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
 
+    // MARK: - Helpers
+    
     func play() {
         player?.play()
     }
@@ -139,9 +159,20 @@ class VideoCell: UITableViewCell {
             subtitleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
     }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        playerLayer?.frame = videoContainerView.bounds
+    
+    private func setupPlayerLooping() {
+        // Remove existing observer if any
+        if let observer = playerItemEndObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        
+        // Add new observer
+        playerItemEndObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player?.currentItem,
+            queue: .main) { [weak self] _ in
+                self?.player?.seek(to: .zero)
+                self?.player?.play()
+        }
     }
 }
