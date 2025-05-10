@@ -8,7 +8,8 @@
 import Foundation
 
 struct Video: Codable {
+    let id: String
     let title: String
     let subTitle: String
-    let url: URL
+    let url: String
 }

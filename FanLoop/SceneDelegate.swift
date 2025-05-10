@@ -15,7 +15,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        let shortsController = ShortsVideoController()
+        let repository = VideoRepository()  
+        let viewModel = VideoListViewModel(repository: repository)
+        let shortsController = ShortsVideoController(viewModel: viewModel)
         let nav = UINavigationController(rootViewController: shortsController)
         window.rootViewController = nav
         self.window = window

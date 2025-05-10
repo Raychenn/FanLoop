@@ -52,7 +52,11 @@ class VideoCell: UITableViewCell {
         playerLayer?.removeFromSuperlayer()
 
         // Setup new player
-        player = AVPlayer(url: video.url)
+        guard let url = URL(string: video.url) else {
+            // inform controller about errors
+            return
+        }
+        player = AVPlayer(url: url)
         playerLayer = AVPlayerLayer(player: player)
         playerLayer?.frame = videoContainerView.bounds
         playerLayer?.videoGravity = .resizeAspect

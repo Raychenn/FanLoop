@@ -8,6 +8,8 @@
 import UIKit
 
 class ShortsVideoController: UIViewController {
+    
+    private let viewModel: VideoListViewModel
 
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
@@ -17,13 +19,44 @@ class ShortsVideoController: UIViewController {
         return tableView
     }()
     
+    init(viewModel: VideoListViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupBindings()
+        viewModel.fetchVideos()
+
     }
 
     private func setupUI() {
         title = "FanLoop"
+    }
+    
+    private func setupBindings() {
+        viewModel.videosUpdateHandler = { [weak self] videos in
+            Task.detached { @MainActor in
+                self?.tableView.reloadData()
+            }
+        }
+        
+        viewModel.errorUpdateHandler = { [weak self] error in
+            Task.detached { @MainActor in
+                if let error = error {
+                    print("handle error: \(error)")
+                }
+            }
+        }
+        
+        viewModel.loadingUpdateHandler = { [weak self] isLoading in
+        }
     }
 
 }
