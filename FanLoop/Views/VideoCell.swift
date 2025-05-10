@@ -14,11 +14,20 @@ class VideoCell: UITableViewCell {
     
     private var player: AVPlayer?
     private var playerLayer: AVPlayerLayer?
+    private let videoHeightRatio: CGFloat = 0.75
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        label.font = UIFont.systemFont(ofSize: 14, weight: .bold)
         label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.textColor = .secondaryLabel
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -46,23 +55,20 @@ class VideoCell: UITableViewCell {
     // MARK: - Configuration
 
     func configure(with video: Video) {
-        titleLabel.text = video.title
-        
-        // Remove existing player layer if any
-        playerLayer?.removeFromSuperlayer()
+        if let path = Bundle.main.url(forResource: video.url, withExtension: "mp4") {
+            titleLabel.text = video.title
+            subtitleLabel.text = video.subTitle
+            
+            player = AVPlayer(url: path)
+            playerLayer = AVPlayerLayer(player: player)
+            playerLayer?.frame = contentView.bounds
+            playerLayer?.videoGravity = .resizeAspectFill
 
-        // Setup new player
-        guard let url = URL(string: video.url) else {
-            // inform controller about errors
-            return
-        }
-        player = AVPlayer(url: url)
-        playerLayer = AVPlayerLayer(player: player)
-        playerLayer?.frame = videoContainerView.bounds
-        playerLayer?.videoGravity = .resizeAspect
-
-        if let layer = playerLayer {
-            videoContainerView.layer.addSublayer(layer)
+            if let layer = playerLayer {
+                videoContainerView.layer.addSublayer(layer)
+            }
+        } else {
+            print("⚠️ Video not found: \(video.url).mp4")
         }
     }
 
@@ -85,19 +91,22 @@ class VideoCell: UITableViewCell {
     // MARK: - Layout
 
     private func setupViews() {
-//        contentView.addSubview(titleLabel)
         contentView.addSubview(videoContainerView)
-        
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(subtitleLabel)
+
         NSLayoutConstraint.activate([
-//            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-//            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-//            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-            
             videoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             videoContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
             videoContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            videoContainerView.heightAnchor.constraint(equalToConstant: 200),
-            videoContainerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+            videoContainerView.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height * videoHeightRatio),
+            
+            titleLabel.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
     }
 
