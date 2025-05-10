@@ -13,33 +13,15 @@ protocol VideoRepositoryProtocol {
 
 final class VideoRepository: VideoRepositoryProtocol {
     private let httpClient: HTTPClientProtocol
-    private let videoMetadata: [Video]
     
-    init(httpClient: HTTPClientProtocol = HTTPClient(),
-         videoMetadata: [Video] = VideoEndpoint.all) {
+    init(httpClient: HTTPClientProtocol = HTTPClient()) {
         self.httpClient = httpClient
-        self.videoMetadata = videoMetadata
     }
     
     func fetchVideos() async throws -> [Video] {
-        // Create a map of URLs to their corresponding metadata
-        let urlToMetadata = Dictionary(uniqueKeysWithValues:
-            videoMetadata.map { ($0.url, $0) }
-        )
+        // Simulate network delay
+        try await Task.sleep(for: .seconds(1))
         
-        // Fetch all videos in parallel
-        let urls = videoMetadata.map { $0.url }
-        let fetchedVideos: [Video] = try await httpClient.fetchMultiple(from: urls)
-        
-        // Map fetched videos with their metadata
-        return fetchedVideos.compactMap { fetchedVideo in
-            guard let metadata = urlToMetadata[fetchedVideo.url] else { return nil }
-            return Video(
-                id: metadata.id,
-                title: metadata.title,
-                subTitle: metadata.subTitle,
-                url: fetchedVideo.url
-            )
-        }
+        return VideoEndpoint.all
     }
 }
