@@ -12,12 +12,6 @@ protocol VideoRepositoryProtocol {
 }
 
 final class VideoRepository: VideoRepositoryProtocol {
-    private let httpClient: HTTPClientProtocol
-    
-    init(httpClient: HTTPClientProtocol = HTTPClient()) {
-        self.httpClient = httpClient
-    }
-    
     func fetchVideos() async throws -> [Video] {
         // Simulate network delay
         try await Task.sleep(for: .seconds(1))
