@@ -15,9 +15,16 @@ class VideoCell: UITableViewCell {
     private var player: AVPlayer?
     private var playerLayer: AVPlayerLayer?
     private let videoHeightRatio: CGFloat = 0.75
+    private var isMuted: Bool = false {
+        didSet {
+            let image = isMuted ? UIImage(systemName: "speaker.slash.fill") : UIImage(systemName: "speaker.fill")
+            muteButton.setImage(image, for: .normal)
+        }
+    }
     
     private let titleLabel: UILabel = {
         let label = UILabel()
+        label.numberOfLines = 1
         label.font = UIFont.systemFont(ofSize: 14, weight: .bold)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -26,10 +33,20 @@ class VideoCell: UITableViewCell {
     
     private let subtitleLabel: UILabel = {
         let label = UILabel()
+        label.numberOfLines = 1
         label.font = UIFont.systemFont(ofSize: 12)
         label.textColor = .secondaryLabel
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+    
+    private lazy var muteButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.tintColor = .black
+        button.setImage(UIImage(systemName: "speaker.fill")?.withTintColor(.black), for: .normal)
+        button.addTarget(self, action: #selector(didTapMuteButton), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
     
     private let videoContainerView: UIView = {
@@ -60,12 +77,13 @@ class VideoCell: UITableViewCell {
             subtitleLabel.text = video.subTitle
             
             player = AVPlayer(url: path)
+            player?.isMuted = self.isMuted
             playerLayer = AVPlayerLayer(player: player)
             playerLayer?.frame = contentView.bounds
             playerLayer?.videoGravity = .resizeAspectFill
 
             if let layer = playerLayer {
-                videoContainerView.layer.addSublayer(layer)
+                videoContainerView.layer.insertSublayer(layer, at: 0)
             }
         } else {
             print("⚠️ Video not found: \(video.url).mp4")
@@ -87,11 +105,16 @@ class VideoCell: UITableViewCell {
     func pause() {
         player?.pause()
     }
+    
+    @objc func didTapMuteButton() {
+        isMuted.toggle()
+    }
 
     // MARK: - Layout
 
     private func setupViews() {
         contentView.addSubview(videoContainerView)
+        videoContainerView.addSubview(muteButton)
         contentView.addSubview(titleLabel)
         contentView.addSubview(subtitleLabel)
 
@@ -101,11 +124,18 @@ class VideoCell: UITableViewCell {
             videoContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             videoContainerView.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height * videoHeightRatio),
             
+            muteButton.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor, constant: -8),
+            muteButton.bottomAnchor.constraint(equalTo: videoContainerView.bottomAnchor, constant: -8),
+            muteButton.widthAnchor.constraint(equalToConstant: 20),
+            muteButton.heightAnchor.constraint(equalToConstant: 20),
+            
             titleLabel.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor, constant: -8),
             
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             subtitleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
         ])
     }

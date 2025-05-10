@@ -44,8 +44,9 @@ class ShortsVideoController: UIViewController {
     private func setupUI() {
         title = "FanLoop"
         view.addSubview(tableView)
+        view.backgroundColor = .systemBackground
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -100,9 +101,7 @@ extension ShortsVideoController: UITableViewDelegate {
         // Get visible cells
         guard let visibleCells = tableView.visibleCells as? [VideoCell] else { return }
         
-        for cell in visibleCells {
-            guard let indexPath = tableView.indexPath(for: cell) else { continue }
-            
+        for cell in visibleCells {            
             // Calculate how much of the cell is visible
             let cellFrame = tableView.convert(cell.frame, to: tableView.superview)
             let cellVisibleHeight = cellFrame.intersection(tableView.frame).height
@@ -131,3 +130,12 @@ extension ShortsVideoController: UITableViewDelegate {
         scrollView.setContentOffset(CGPoint(x: 0, y: yOffset), animated: true)
     }
 }
+
+// TODO
+
+/*
+ 1. replay video when playing to end
+ 2. expand title/subtitle label when texts are too long
+ 3. unit tests
+ 
+ */
