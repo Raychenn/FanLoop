@@ -96,5 +96,38 @@ extension ShortsVideoController: UITableViewDataSource {
 
 // MARK: UITableViewDelegate
 extension ShortsVideoController: UITableViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // Get visible cells
+        guard let visibleCells = tableView.visibleCells as? [VideoCell] else { return }
+        
+        for cell in visibleCells {
+            guard let indexPath = tableView.indexPath(for: cell) else { continue }
+            
+            // Calculate how much of the cell is visible
+            let cellFrame = tableView.convert(cell.frame, to: tableView.superview)
+            let cellVisibleHeight = cellFrame.intersection(tableView.frame).height
+            let cellTotalHeight = cell.frame.height
+            let visibilityPercentage = cellVisibleHeight / cellTotalHeight
+            
+            // If cell is more than 50% visible, play it and pause others
+            if visibilityPercentage > 0.5 {
+                cell.play()
+                
+                // Pause all other visible cells
+                visibleCells.forEach { otherCell in
+                    if otherCell != cell {
+                        otherCell.pause()
+                    }
+                }
+                break // Only play one video at a time
+            }
+        }
+    }
     
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        // Snap to the nearest cell when scrolling ends
+        let page = Int(scrollView.contentOffset.y / scrollView.bounds.height)
+        let yOffset = CGFloat(page) * scrollView.bounds.height
+        scrollView.setContentOffset(CGPoint(x: 0, y: yOffset), animated: true)
+    }
 }
