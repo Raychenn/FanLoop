@@ -10,6 +10,8 @@ import UIKit
 class ShortsVideoController: UIViewController {
     
     private let viewModel: VideoListViewModel
+    
+    private var currentlyPlayingCell: VideoCell?
 
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
@@ -19,6 +21,13 @@ class ShortsVideoController: UIViewController {
         tableView.register(VideoCell.self, forCellReuseIdentifier: String(describing: VideoCell.self))
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
+    }()
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
     }()
     
     init(viewModel: VideoListViewModel) {
@@ -44,12 +53,19 @@ class ShortsVideoController: UIViewController {
     private func setupUI() {
         title = "FanLoop"
         view.addSubview(tableView)
+        view.addSubview(loadingIndicator)
         view.backgroundColor = .systemBackground
+        
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+        
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     
@@ -57,21 +73,44 @@ class ShortsVideoController: UIViewController {
         viewModel.videosUpdateHandler = { [weak self] videos in
             Task.detached { @MainActor in
                 self?.tableView.reloadData()
+                self?.updatePlaybackForMostVisibleCell()
             }
         }
         
-        viewModel.errorUpdateHandler = { [weak self] error in
+        viewModel.errorUpdateHandler = { _ in
             Task.detached { @MainActor in
-                if let error = error {
-                    print("handle error: \(error)")
-                }
+                print("handle error here")
             }
         }
         
         viewModel.loadingUpdateHandler = { [weak self] isLoading in
+            isLoading ? self?.loadingIndicator.startAnimating() : self?.loadingIndicator.stopAnimating()
         }
     }
+    
+    private func updatePlaybackForMostVisibleCell() {
+        guard let visibleCells = tableView.visibleCells as? [VideoCell] else { return }
 
+        var bestCandidate: VideoCell?
+        var maxVisibleHeight: CGFloat = 0
+
+        for cell in visibleCells {
+            let cellFrame = tableView.convert(cell.frame, to: tableView.superview)
+            let visibleHeight = cellFrame.intersection(tableView.frame).height
+            let visibilityRatio = visibleHeight / cell.frame.height
+
+            if visibilityRatio > 0.5 && visibleHeight > maxVisibleHeight {
+                bestCandidate = cell
+                maxVisibleHeight = visibleHeight
+            }
+        }
+
+        if let candidate = bestCandidate, candidate != currentlyPlayingCell {
+            currentlyPlayingCell?.pause()
+            candidate.play()
+            currentlyPlayingCell = candidate
+        }
+    }
 }
 
  // MARK: UITableViewDataSource
@@ -98,44 +137,6 @@ extension ShortsVideoController: UITableViewDataSource {
 // MARK: UITableViewDelegate
 extension ShortsVideoController: UITableViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        // Get visible cells
-        guard let visibleCells = tableView.visibleCells as? [VideoCell] else { return }
-        
-        for cell in visibleCells {            
-            // Calculate how much of the cell is visible
-            let cellFrame = tableView.convert(cell.frame, to: tableView.superview)
-            let cellVisibleHeight = cellFrame.intersection(tableView.frame).height
-            let cellTotalHeight = cell.frame.height
-            let visibilityPercentage = cellVisibleHeight / cellTotalHeight
-            
-            // If cell is more than 50% visible, play it and pause others
-            if visibilityPercentage > 0.5 {
-                cell.play()
-                
-                // Pause all other visible cells
-                visibleCells.forEach { otherCell in
-                    if otherCell != cell {
-                        otherCell.pause()
-                    }
-                }
-                break // Only play one video at a time
-            }
-        }
-    }
-    
-    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        // Snap to the nearest cell when scrolling ends
-        let page = Int(scrollView.contentOffset.y / scrollView.bounds.height)
-        let yOffset = CGFloat(page) * scrollView.bounds.height
-        scrollView.setContentOffset(CGPoint(x: 0, y: yOffset), animated: true)
+        updatePlaybackForMostVisibleCell()
     }
 }
-
-// TODO
-
-/*
- 1. replay video when playing to end
- 2. expand title/subtitle label when texts are too long
- 3. unit tests
- 
- */

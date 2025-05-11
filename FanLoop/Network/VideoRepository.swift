@@ -14,7 +14,7 @@ protocol VideoRepositoryProtocol {
 final class VideoRepository: VideoRepositoryProtocol {
     func fetchVideos() async throws -> [Video] {
         // Simulate network delay
-        try await Task.sleep(for: .seconds(1))
+        try await Task.sleep(for: .seconds(1.5))
         
         return VideoEndpoint.all
     }
