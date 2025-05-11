@@ -16,6 +16,8 @@ class VideoCell: UITableViewCell {
     private var playerLayer: AVPlayerLayer?
     private var playerItemEndObserver: NSObjectProtocol?
     private let videoHeightRatio: CGFloat = 0.75
+    private var isTitleExpanded = false
+    private var isSubtitleExpanded = false
     private var isMuted: Bool = false {
         didSet {
             let image = isMuted ? UIImage(systemName: "speaker.slash.fill") : UIImage(systemName: "speaker.fill")
@@ -23,21 +25,27 @@ class VideoCell: UITableViewCell {
         }
     }
     
-    private let titleLabel: UILabel = {
+    private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
         label.font = UIFont.systemFont(ofSize: 14, weight: .bold)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.isUserInteractionEnabled = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(titleLabelTapped))
+        label.addGestureRecognizer(tapGesture)
         return label
     }()
     
-    private let subtitleLabel: UILabel = {
+    private lazy var  subtitleLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
         label.font = UIFont.systemFont(ofSize: 12)
         label.textColor = .secondaryLabel
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.isUserInteractionEnabled = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(subtitleLabelTapped))
+        label.addGestureRecognizer(tapGesture)
         return label
     }()
     
@@ -129,6 +137,29 @@ class VideoCell: UITableViewCell {
     @objc func didTapMuteButton() {
         isMuted.toggle()
     }
+    
+    @objc private func titleLabelTapped() {
+        toggleLabelExpansion(for: titleLabel, isExpanded: &isTitleExpanded)
+    }
+    
+    @objc private func subtitleLabelTapped() {
+        toggleLabelExpansion(for: subtitleLabel, isExpanded: &isSubtitleExpanded)
+    }
+    
+    private func toggleLabelExpansion(for label: UILabel, isExpanded: inout Bool) {
+        isExpanded.toggle()
+        let expanded = isExpanded
+        
+        UIView.animate(withDuration: 0.3) {
+            label.numberOfLines = expanded ? 0 : 1
+            self.layoutIfNeeded()
+            
+            if let tableView = self.superview as? UITableView {
+                tableView.beginUpdates()
+                tableView.endUpdates()
+            }
+        }
+    }
 
     // MARK: - Layout
 
@@ -137,6 +168,12 @@ class VideoCell: UITableViewCell {
         videoContainerView.addSubview(muteButton)
         contentView.addSubview(titleLabel)
         contentView.addSubview(subtitleLabel)
+        
+        let labelsStackView = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        labelsStackView.axis = .vertical
+        labelsStackView.spacing = 8
+        labelsStackView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(labelsStackView)
 
         NSLayoutConstraint.activate([
             videoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
@@ -149,14 +186,10 @@ class VideoCell: UITableViewCell {
             muteButton.widthAnchor.constraint(equalToConstant: 20),
             muteButton.heightAnchor.constraint(equalToConstant: 20),
             
-            titleLabel.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor, constant: 8),
-            titleLabel.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor),
-            titleLabel.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor, constant: -8),
-            
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
-            subtitleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+            labelsStackView.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor, constant: 8),
+            labelsStackView.leadingAnchor.constraint(equalTo: videoContainerView.leadingAnchor, constant: 8),
+            labelsStackView.trailingAnchor.constraint(equalTo: videoContainerView.trailingAnchor, constant: -16),
+            labelsStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -8)
         ])
     }
     

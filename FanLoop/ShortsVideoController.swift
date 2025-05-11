@@ -20,6 +20,9 @@ class ShortsVideoController: UIViewController {
         tableView.delegate = self
         tableView.register(VideoCell.self, forCellReuseIdentifier: String(describing: VideoCell.self))
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.allowsSelection = false
+        tableView.estimatedRowHeight = UIScreen.main.bounds.height
+        tableView.rowHeight = UITableView.automaticDimension
         return tableView
     }()
     
@@ -136,6 +139,10 @@ extension ShortsVideoController: UITableViewDataSource {
 
 // MARK: UITableViewDelegate
 extension ShortsVideoController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        UITableView.automaticDimension
+    }
+    
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         updatePlaybackForMostVisibleCell()
     }

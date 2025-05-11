@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class VideoListViewModel {
+class VideoListViewModel {
     
     private let repository: VideoRepositoryProtocol
     
@@ -35,7 +35,6 @@ final class VideoListViewModel {
             isLoading = true
             do {
                 videos = try await repository.fetchVideos()
-                error = nil
             } catch {
                 self.error = error
             }
